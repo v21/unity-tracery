@@ -1,5 +1,5 @@
 
-This is a (currently very barebones) port of Kate Compton's [Tracery](https://tracery.io "Tracery") text generation grammar tool to Unity (and by extension C# in general).
+This is a (currently very barebones) port of Kate Compton's [Tracery](http://tracery.io "Tracery") text generation grammar tool to Unity (and by extension C# in general).
 
 It's used like this:
 	
