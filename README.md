@@ -12,6 +12,18 @@ which would give an output something like :
 
     ones
     three
+    
+You can also specify the random seed when calling Generate, to make output repeatable:
+
+    Debug.Log(grammar.Generate(123456));
+    Debug.Log(grammar.Generate(123456));
+    Debug.Log(grammar.Generate(123456));
+    Debug.Log(grammar.Generate(123456));
+    
+    ones
+    ones
+    ones
+    ones
 
 There is currently no support for modifiers, variables, or the fancy rich-object stuff that's been added recently.
 
