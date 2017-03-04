@@ -8,37 +8,46 @@ using LitJson;
 
 public class TraceryGrammar {
 
-	public string source;
+    public string source;
     Dictionary<string,string[]> grammar;
 
-	Regex rgx = new Regex(@"\#(?<expand>[^\#]*?)\#", RegexOptions.IgnoreCase);
+    Regex rgx = new Regex(@"\#(?<expand>[^\#]*?)\#", RegexOptions.IgnoreCase);
 
-	public string Generate()
-	{
-        return GenerateFromNode("origin", grammar);
-	}
+    [ThreadStatic] private static System.Random random;
 
-	public string GenerateFromNode(string token, Dictionary<string,string[]> parsed)
-	{
-		if (parsed.ContainsKey(token))
-		{
-            var ret = Shuffle(parsed[token]).First();
-			return rgx.Replace(ret, m => GenerateFromNode(m.Groups[1].Value, parsed));
-		}
-		else
-		{
-			return "[" + token + "]";
-		}
-	}
+    public string Generate(int? randomSeed = null)
+    {
+        return GenerateFromNode("origin", randomSeed);
+    }
+
+    public string GenerateFromNode(string token, int? randomSeed = null)
+    {
+        if (randomSeed.HasValue)
+        {
+            random = new System.Random(randomSeed.Value);
+        }
+        if (grammar.ContainsKey(token))
+        {
+            var ret = Shuffle(grammar[token]).First();
+            return rgx.Replace(ret, m => GenerateFromNode(m.Groups[1].Value));
+        }
+        else
+        {
+            return "[" + token + "]";
+        }
+    }
+
 
     public static List<T> Shuffle<T>(IEnumerable<T> list)
     {
+        var rand = random ?? (random = new System.Random(unchecked(Environment.TickCount * 31 + System.Threading.Thread.CurrentThread.ManagedThreadId)));
+
         var output = new List<T>(list);
         int n = output.Count;
         while (n > 1)
         {
             n--;
-            int k = ThreadSafeRandom.ThisThreadsRandom.Next(n + 1);
+            int k = rand.Next(n + 1);
             T value = output[k];
             output[k] = output[n];
             output[n] = value;
@@ -46,21 +55,12 @@ public class TraceryGrammar {
         return output;
     }
 
-    public static class ThreadSafeRandom
-    {
-        [ThreadStatic] private static System.Random Local;
-
-        public static System.Random ThisThreadsRandom
-        {
-            get { return Local ?? (Local = new System.Random(unchecked(Environment.TickCount * 31 + System.Threading.Thread.CurrentThread.ManagedThreadId))); }
-        }
-    }
 
     Dictionary<string,string[]> Decode(string source)
-	{
-		Dictionary<string,string[]> traceryStruct = new Dictionary<string, string[]>();
+    {
+        Dictionary<string,string[]> traceryStruct = new Dictionary<string, string[]>();
         var map = JsonToMapper(source);
-		foreach (var key in map.Keys) {
+        foreach (var key in map.Keys) {
             if (map[key].IsArray)
             {
                 string[] entries = new string[map[key].Count];
@@ -75,15 +75,15 @@ public class TraceryGrammar {
                 string[] entries = {map[key].ToString()};
                 traceryStruct.Add(key, entries);
             }
-			
-		}
-		return traceryStruct;
-	}
+            
+        }
+        return traceryStruct;
+    }
 
-	public static JsonData JsonToMapper(string tracery)
-	{
-		var traceryStructure = JsonMapper.ToObject(tracery);
-		return traceryStructure;
+    public static JsonData JsonToMapper(string tracery)
+    {
+        var traceryStructure = JsonMapper.ToObject(tracery);
+        return traceryStructure;
     }
 
     public TraceryGrammar(string source)
